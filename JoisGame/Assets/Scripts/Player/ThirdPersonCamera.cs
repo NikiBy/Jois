@@ -17,8 +17,7 @@ namespace Jois.Player
         [SerializeField] private float maxDistance = 10f;
 
         [Header("Sensitivity")]
-        [SerializeField] private float mouseSensitivityX = 150f;
-        [SerializeField] private float mouseSensitivityY = 100f;
+        [SerializeField, Range(0.1f, 10f)] private float mouseSensitivity = 1.5f;
         [SerializeField] private float minPitch = -20f;
         [SerializeField] private float maxPitch = 60f;
 
@@ -67,8 +66,8 @@ namespace Jois.Player
         {
             Vector2 mouseDelta = GetMouseDelta();
 
-            yaw += mouseDelta.x * mouseSensitivityX * 0.02f;
-            pitch -= mouseDelta.y * mouseSensitivityY * 0.02f;
+            yaw += mouseDelta.x * mouseSensitivity;
+            pitch -= mouseDelta.y * mouseSensitivity;
             pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
 
             // Toggle cursor lock with Escape
@@ -90,7 +89,9 @@ namespace Jois.Player
 #if ENABLE_INPUT_SYSTEM
             if (Mouse.current != null && Cursor.lockState == CursorLockMode.Locked)
             {
-                return Mouse.current.delta.ReadValue();
+                // In New Input System, mouse delta is measured in raw screen pixels.
+                // Scale by 0.1 to make it smooth and comparable to normal sensitivity.
+                return Mouse.current.delta.ReadValue() * 0.1f;
             }
             return Vector2.zero;
 #else
