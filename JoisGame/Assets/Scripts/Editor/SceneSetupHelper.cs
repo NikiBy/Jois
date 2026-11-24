@@ -4,17 +4,19 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Jois.UI;
+using Jois.Level;
 
 namespace Jois.Editor
 {
     public static class SceneSetupHelper
     {
+        [MenuItem("Tools/Jois/1. Создать красивый UI Урока (Canvas)", false, 1)]
         [MenuItem("Window/Jois/1. Создать красивый UI Урока (Canvas)", false, 1)]
         [MenuItem("GameObject/Jois/1. Создать красивый UI Урока (Canvas)", false, 10)]
         public static void CreateLessonUI()
         {
             // Find or create Canvas
-            Canvas canvas = Object.FindFirstObjectByType<Canvas>();
+            Canvas canvas = Object.FindAnyObjectByType<Canvas>();
             GameObject canvasObj;
 
             if (canvas == null)
@@ -33,7 +35,7 @@ namespace Jois.Editor
             }
 
             // Ensure EventSystem
-            if (Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
+            if (Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             {
                 var eventSystemObj = new GameObject("EventSystem");
                 eventSystemObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
@@ -169,6 +171,7 @@ namespace Jois.Editor
             Debug.Log("🎉 [Jois] Интерфейс урока успешно создан и настроен!");
         }
 
+        [MenuItem("Tools/Jois/2. Создать первый тестовый Домик-Урок", false, 2)]
         [MenuItem("Window/Jois/2. Создать первый тестовый Домик-Урок", false, 2)]
         [MenuItem("GameObject/Jois/2. Создать первый тестовый Домик-Урок", false, 11)]
         public static void CreateTestHouse()
