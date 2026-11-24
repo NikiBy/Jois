@@ -11,15 +11,15 @@ namespace Jois.Player
         [Header("Movement Settings")]
         [SerializeField] private float walkSpeed = 6f;
         [SerializeField] private float runSpeed = 10f;
-        [SerializeField] private float rotationSmoothTime = 0.1f;
-        [SerializeField] private float gravity = -20f;
+        [SerializeField] private float rotationSmoothTime = 0.08f;
+        [SerializeField] private float gravity = -25f;
         [SerializeField] private float jumpHeight = 1.5f;
 
         [Header("References")]
         [SerializeField] private Transform cameraTransform;
 
         private CharacterController characterController;
-        private Vector3 velocity;
+        private Vector3 verticalVelocity;
         private float rotationVelocity;
         private bool isGrounded;
         private bool canMove = true;
@@ -32,7 +32,7 @@ namespace Jois.Player
                 canMove = value;
                 if (!canMove)
                 {
-                    velocity = Vector3.zero;
+                    verticalVelocity = Vector3.zero;
                 }
             }
         }
@@ -49,7 +49,12 @@ namespace Jois.Player
 
         private void Update()
         {
-            HandleGrounded();
+            // Ground check
+            isGrounded = characterController.isGrounded;
+            if (isGrounded && verticalVelocity.y < 0f)
+            {
+                verticalVelocity.y = -2f; // Firm ground snap
+            }
 
             if (!canMove) return;
 
@@ -57,53 +62,45 @@ namespace Jois.Player
             bool isRunning = GetRunInput();
             bool jumpPressed = GetJumpInput();
 
-            HandleMovement(input, isRunning);
-            HandleJump(jumpPressed);
-            ApplyGravity();
-        }
+            Vector3 horizontalMove = Vector3.zero;
 
-        private void HandleGrounded()
-        {
-            isGrounded = characterController.isGrounded;
-            if (isGrounded && velocity.y < 0)
+            if (input.sqrMagnitude >= 0.01f)
             {
-                velocity.y = -2f; // Small downward force to stay grounded
-            }
-        }
+                // Project camera directions strictly onto the horizontal plane (Y = 0)
+                // This prevents flying or diving when looking up or down!
+                Vector3 camForward = cameraTransform != null ? cameraTransform.forward : Vector3.forward;
+                Vector3 camRight = cameraTransform != null ? cameraTransform.right : Vector3.right;
+                camForward.y = 0f;
+                camRight.y = 0f;
+                camForward.Normalize();
+                camRight.Normalize();
 
-        private void HandleMovement(Vector2 input, bool isRunning)
-        {
-            Vector3 direction = new Vector3(input.x, 0f, input.y).normalized;
+                Vector3 targetDirection = (camForward * input.y + camRight * input.x).normalized;
 
-            if (direction.magnitude >= 0.1f)
-            {
-                float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
-                if (cameraTransform != null)
+                if (targetDirection.sqrMagnitude >= 0.001f)
                 {
-                    targetAngle += cameraTransform.eulerAngles.y;
+                    float targetAngle = Mathf.Atan2(targetDirection.x, targetDirection.z) * Mathf.Rad2Deg;
+                    float smoothAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref rotationVelocity, rotationSmoothTime);
+                    transform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
+
+                    float currentSpeed = isRunning ? runSpeed : walkSpeed;
+                    horizontalMove = targetDirection * currentSpeed;
                 }
-
-                float smoothAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref rotationVelocity, rotationSmoothTime);
-                transform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
-
-                Vector3 moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-                float speed = isRunning ? runSpeed : walkSpeed;
-                characterController.Move(moveDirection.normalized * (speed * Time.deltaTime));
             }
-        }
 
-        private void HandleJump(bool jumpPressed)
-        {
+            // Jump
             if (jumpPressed && isGrounded)
             {
-                velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             }
-        }
 
-        private void ApplyGravity()
-        {
-            velocity.y += gravity * Time.deltaTime;
-            characterController.Move(velocity * Time.deltaTime);
+            // Gravity
+            verticalVelocity.y += gravity * Time.deltaTime;
+            if (verticalVelocity.y < -35f) verticalVelocity.y = -35f; // Clamp fall speed
+
+            // Combine into ONE unified movement call (essential for smooth physics & ground detection)
+            Vector3 finalMovement = horizontalMove + verticalVelocity;
+            characterController.Move(finalMovement * Time.deltaTime);
         }
 
         private Vector2 GetMovementInput()
