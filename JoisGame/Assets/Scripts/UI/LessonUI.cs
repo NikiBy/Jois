@@ -2,10 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Jois.Player;
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
-#endif
 
 namespace Jois.UI
 {
@@ -40,17 +38,24 @@ namespace Jois.UI
             }
             Instance = this;
 
-            EnsureInputModuleForUI();
+            FixEventSystemModule();
 
+            // Find close button even in inactive hierarchy
             if (closeButton == null && windowPanel != null)
             {
-                closeButton = windowPanel.GetComponentInChildren<Button>();
+                closeButton = windowPanel.GetComponentInChildren<Button>(true);
             }
 
             if (closeButton != null)
             {
-                closeButton.onClick.RemoveListener(CloseLesson);
+                closeButton.onClick.RemoveAllListeners();
                 closeButton.onClick.AddListener(CloseLesson);
+
+                // Disable raycast target on child texts so they never block button clicks
+                foreach (var tmp in closeButton.GetComponentsInChildren<TextMeshProUGUI>(true))
+                {
+                    tmp.raycastTarget = false;
+                }
             }
 
             if (windowPanel != null) windowPanel.SetActive(false);
@@ -79,7 +84,7 @@ namespace Jois.UI
             }
         }
 
-        private void EnsureInputModuleForUI()
+        private void FixEventSystemModule()
         {
             var eventSystem = UnityEngine.EventSystems.EventSystem.current;
             if (eventSystem == null)
@@ -89,18 +94,16 @@ namespace Jois.UI
 
             if (eventSystem != null)
             {
-#if ENABLE_INPUT_SYSTEM
-                var legacyModule = eventSystem.GetComponent<UnityEngine.EventSystems.StandaloneInputModule>();
-                if (legacyModule != null)
+                var legacy = eventSystem.GetComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+                if (legacy != null)
                 {
-                    DestroyImmediate(legacyModule);
+                    DestroyImmediate(legacy);
                 }
 
                 if (eventSystem.GetComponent<InputSystemUIInputModule>() == null)
                 {
                     eventSystem.gameObject.AddComponent<InputSystemUIInputModule>();
                 }
-#endif
             }
         }
 
@@ -108,18 +111,10 @@ namespace Jois.UI
         {
             if (isWindowOpen)
             {
-                // Close on Escape
-#if ENABLE_INPUT_SYSTEM
                 if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
                 {
                     CloseLesson();
                 }
-#else
-                if (Input.GetKeyDown(KeyCode.Escape))
-                {
-                    CloseLesson();
-                }
-#endif
             }
         }
 
@@ -142,6 +137,7 @@ namespace Jois.UI
             HidePrompt();
 
             FindPlayerReferences();
+            FixEventSystemModule();
 
             if (titleText != null) titleText.text = title;
             if (theoryText != null) theoryText.text = theory;

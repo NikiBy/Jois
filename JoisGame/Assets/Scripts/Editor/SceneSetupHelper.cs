@@ -153,6 +153,7 @@ namespace Jois.Editor
             btnTmp.fontStyle = FontStyles.Bold;
             btnTmp.alignment = TextAlignmentOptions.Center;
             btnTmp.color = Color.white;
+            btnTmp.raycastTarget = false; // Never block button click
 
             // Connect OnClick to CloseLesson()
             UnityEditor.Events.UnityEventTools.AddPersistentListener(button.onClick, lessonUI.CloseLesson);
@@ -164,6 +165,7 @@ namespace Jois.Editor
             so.FindProperty("titleText").objectReferenceValue = titleTmp;
             so.FindProperty("theoryText").objectReferenceValue = theoryTmp;
             so.FindProperty("promptText").objectReferenceValue = promptTmp;
+            so.FindProperty("closeButton").objectReferenceValue = button;
             so.ApplyModifiedProperties();
 
             // Hide window by default, hide prompt by default
