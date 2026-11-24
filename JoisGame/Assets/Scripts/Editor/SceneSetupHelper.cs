@@ -34,12 +34,17 @@ namespace Jois.Editor
                 canvasObj = canvas.gameObject;
             }
 
-            // Ensure EventSystem
-            if (Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
+            // Ensure EventSystem with modern Input System module
+            var eventSystem = Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>();
+            if (eventSystem == null)
             {
                 var eventSystemObj = new GameObject("EventSystem");
                 eventSystemObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
+#if ENABLE_INPUT_SYSTEM
+                eventSystemObj.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+#else
                 eventSystemObj.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+#endif
             }
 
             // Add or get LessonUI component
