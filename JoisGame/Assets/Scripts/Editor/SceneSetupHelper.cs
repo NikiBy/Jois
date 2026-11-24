@@ -9,7 +9,8 @@ namespace Jois.Editor
 {
     public static class SceneSetupHelper
     {
-        [MenuItem("Tools/Jois/1. Создать красивый UI Урока (Canvas)", false, 1)]
+        [MenuItem("Window/Jois/1. Создать красивый UI Урока (Canvas)", false, 1)]
+        [MenuItem("GameObject/Jois/1. Создать красивый UI Урока (Canvas)", false, 10)]
         public static void CreateLessonUI()
         {
             // Find or create Canvas
@@ -21,8 +22,9 @@ namespace Jois.Editor
                 canvasObj = new GameObject("LessonCanvas");
                 canvas = canvasObj.AddComponent<Canvas>();
                 canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                canvasObj.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                canvasObj.GetComponent<CanvasScaler>().referenceResolution = new Vector2(1920, 1080);
+                var scaler = canvasObj.AddComponent<CanvasScaler>();
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler.referenceResolution = new Vector2(1920, 1080);
                 canvasObj.AddComponent<GraphicRaycaster>();
             }
             else
@@ -167,7 +169,8 @@ namespace Jois.Editor
             Debug.Log("🎉 [Jois] Интерфейс урока успешно создан и настроен!");
         }
 
-        [MenuItem("Tools/Jois/2. Создать первый тестовый Домик-Урок", false, 2)]
+        [MenuItem("Window/Jois/2. Создать первый тестовый Домик-Урок", false, 2)]
+        [MenuItem("GameObject/Jois/2. Создать первый тестовый Домик-Урок", false, 11)]
         public static void CreateTestHouse()
         {
             // Create root House
